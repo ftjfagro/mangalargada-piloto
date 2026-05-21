@@ -1,5 +1,6 @@
 // =============================================================
 // Mangalargada 2026 - App de captura de passagens
+// v2 - com ajuste manual de hora
 // =============================================================
 
 const URL_APPS_SCRIPT = 'https://script.google.com/macros/s/AKfycbzUMB3R5-Yx1_WvXV3bV_4_5SDvcjgWxTSkDu4FV6KQ62HOZzmMfV-SH-3a16gPW1R6/exec';
@@ -21,13 +22,21 @@ let estado = {
   fotoBlob: null,
   fotoCanvas: null,
   horaFoto: null,
-  timestampFoto: null
+  timestampFoto: null,
+  ajusteSeg: 0,
+  motivoAjuste: ''
 };
 
 const $ = id => document.getElementById(id);
 const pad = n => String(n).padStart(2, '0');
 const hhmmss = d => pad(d.getHours()) + ':' + pad(d.getMinutes()) + ':' + pad(d.getSeconds());
 const ddmmyyyy = d => pad(d.getDate()) + '/' + pad(d.getMonth() + 1) + '/' + d.getFullYear();
+
+function aplicarAjuste(timestampISO, segundos) {
+  const d = new Date(timestampISO);
+  d.setSeconds(d.getSeconds() + (segundos || 0));
+  return d;
+}
 
 // ====================================================================
 // IndexedDB
@@ -149,7 +158,7 @@ $('btn-trocar').addEventListener('click', async () => {
 });
 
 // ====================================================================
-// Relógio + estado da câmera
+// Relógio
 // ====================================================================
 
 function tickRelogio() {
@@ -188,16 +197,16 @@ function capturarFoto() {
   const agora = new Date();
   estado.horaFoto = hhmmss(agora);
   estado.timestampFoto = agora.toISOString();
+  estado.ajusteSeg = 0;
+  estado.motivoAjuste = '';
 
   const video = $('video-stream');
   const canvas = $('canvas-foto');
-
   canvas.width = video.videoWidth || 1280;
   canvas.height = video.videoHeight || 960;
   const ctx = canvas.getContext('2d');
   ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
-  // Carimbar timestamp e posto
   const fontSize = Math.max(36, canvas.width * 0.05);
   ctx.font = 'bold ' + fontSize + 'px monospace';
   ctx.textBaseline = 'bottom';
@@ -229,6 +238,8 @@ function capturarFoto() {
   $('ts-hora').textContent = estado.horaFoto;
   $('hora-foto-val').textContent = estado.horaFoto;
   $('hora-foto').style.display = 'inline';
+  $('btn-ajustar-hora').style.display = 'block';
+  atualizarLabelAjuste();
 }
 
 $('btn-camera').addEventListener('click', () => {
@@ -239,10 +250,102 @@ $('btn-camera').addEventListener('click', () => {
     estado.fotoCanvas = null;
     estado.horaFoto = null;
     estado.timestampFoto = null;
+    estado.ajusteSeg = 0;
+    estado.motivoAjuste = '';
     $('hora-foto').style.display = 'none';
+    $('btn-ajustar-hora').style.display = 'none';
     abrirCamera();
   }
 });
+
+// ====================================================================
+// Modal de ajuste de hora
+// ====================================================================
+
+let modalAjusteTemp = 0;
+
+function abrirModalAjuste() {
+  modalAjusteTemp = estado.ajusteSeg;
+  $('aj-hora-foto').textContent = estado.horaFoto;
+  $('aj-input').value = modalAjusteTemp || '';
+  $('aj-motivo').value = estado.motivoAjuste || '';
+  renderModalHoraFinal();
+  validarModalConfirmar();
+  $('modal-ajuste').classList.add('aberto');
+}
+
+function fecharModalAjuste() {
+  $('modal-ajuste').classList.remove('aberto');
+}
+
+function renderModalHoraFinal() {
+  if (!estado.timestampFoto) return;
+  const ajustada = aplicarAjuste(estado.timestampFoto, modalAjusteTemp);
+  const sinal = modalAjusteTemp > 0 ? '+' : '';
+  $('aj-hora-final').textContent = hhmmss(ajustada) + (modalAjusteTemp !== 0 ? '  (' + sinal + modalAjusteTemp + 's)' : '');
+}
+
+function validarModalConfirmar() {
+  const motivo = $('aj-motivo').value.trim();
+  if (modalAjusteTemp === 0) {
+    $('aj-confirmar').disabled = false;
+  } else {
+    $('aj-confirmar').disabled = motivo.length < 3;
+  }
+}
+
+document.querySelectorAll('.ajuste-botoes button').forEach(b => {
+  b.addEventListener('click', () => {
+    const delta = parseInt(b.dataset.aj, 10);
+    if (delta === 0) {
+      modalAjusteTemp = 0;
+    } else {
+      modalAjusteTemp += delta;
+    }
+    if (modalAjusteTemp > 3600) modalAjusteTemp = 3600;
+    if (modalAjusteTemp < -3600) modalAjusteTemp = -3600;
+    $('aj-input').value = modalAjusteTemp;
+    renderModalHoraFinal();
+    validarModalConfirmar();
+  });
+});
+
+$('aj-input').addEventListener('input', e => {
+  let v = parseInt(e.target.value, 10);
+  if (isNaN(v)) v = 0;
+  if (v > 3600) v = 3600;
+  if (v < -3600) v = -3600;
+  modalAjusteTemp = v;
+  renderModalHoraFinal();
+  validarModalConfirmar();
+});
+
+$('aj-motivo').addEventListener('input', validarModalConfirmar);
+
+$('aj-cancelar').addEventListener('click', fecharModalAjuste);
+
+$('aj-confirmar').addEventListener('click', () => {
+  estado.ajusteSeg = modalAjusteTemp;
+  estado.motivoAjuste = $('aj-motivo').value.trim();
+  atualizarLabelAjuste();
+  fecharModalAjuste();
+});
+
+$('btn-ajustar-hora').addEventListener('click', abrirModalAjuste);
+
+function atualizarLabelAjuste() {
+  const btn = $('btn-ajustar-hora');
+  const lbl = $('lbl-ajustar');
+  if (estado.ajusteSeg === 0) {
+    btn.classList.remove('ajustado');
+    lbl.textContent = 'ajustar hora da passagem';
+  } else {
+    btn.classList.add('ajustado');
+    const ajustada = aplicarAjuste(estado.timestampFoto, estado.ajusteSeg);
+    const sinal = estado.ajusteSeg > 0 ? '+' : '';
+    lbl.textContent = '⏱️ hora ajustada: ' + hhmmss(ajustada) + ' (' + sinal + estado.ajusteSeg + 's) — toque para editar';
+  }
+}
 
 // ====================================================================
 // Inputs dos coletes
@@ -251,7 +354,6 @@ $('btn-camera').addEventListener('click', () => {
 ['colete1', 'colete2', 'colete3'].forEach(id => {
   $(id).addEventListener('input', e => {
     let v = e.target.value.replace(/[^0-9]/g, '');
-    // Validar faixa 1-100 quando completar dígitos
     if (v.length >= 1) {
       const n = parseInt(v, 10);
       if (n > 100) {
@@ -284,8 +386,7 @@ $('btn-salvar').addEventListener('click', async () => {
   if ($('btn-salvar').disabled) return;
 
   const cs = coletesPreenchidos();
-  const agora = new Date();
-  const dataFoto = new Date(estado.timestampFoto);
+  const dataAjustada = aplicarAjuste(estado.timestampFoto, estado.ajusteSeg);
 
   const fotoBase64 = await blobParaBase64(estado.fotoBlob);
 
@@ -294,8 +395,11 @@ $('btn-salvar').addEventListener('click', async () => {
     coletes: cs,
     posto: estado.posto,
     fiscal: estado.nomeFiscal,
-    data: ddmmyyyy(dataFoto),
-    hora: estado.horaFoto,
+    data: ddmmyyyy(dataAjustada),
+    hora: hhmmss(dataAjustada),
+    hora_foto: estado.horaFoto,
+    ajuste_seg: estado.ajusteSeg,
+    motivo_ajuste: estado.motivoAjuste,
     timestamp: estado.timestampFoto,
     foto_base64: fotoBase64,
     sincronizado: false,
@@ -318,9 +422,13 @@ function limparFormulario() {
   estado.fotoCanvas = null;
   estado.horaFoto = null;
   estado.timestampFoto = null;
+  estado.ajusteSeg = 0;
+  estado.motivoAjuste = '';
   $('preview-foto').style.display = 'none';
   $('hora-foto').style.display = 'none';
+  $('btn-ajustar-hora').style.display = 'none';
   $('btn-camera-label').textContent = 'Tirar foto';
+  atualizarLabelAjuste();
   atualizarBotaoSalvar();
 }
 
@@ -354,6 +462,9 @@ async function tentarSync() {
           id: reg.id,
           data: reg.data,
           hora: reg.hora,
+          hora_foto: reg.hora_foto,
+          ajuste_seg: reg.ajuste_seg,
+          motivo_ajuste: reg.motivo_ajuste,
           posto: reg.posto,
           coletes: reg.coletes,
           fiscal: reg.fiscal,
@@ -368,7 +479,6 @@ async function tentarSync() {
           reg.sincronizado = true;
           reg.sincronizado_em = new Date().toISOString();
           reg.link_foto = json.link || '';
-          // Apagar foto base64 para economizar espaço local depois de sincronizar
           delete reg.foto_base64;
           await dbSalvar(reg);
         } else {
@@ -378,7 +488,6 @@ async function tentarSync() {
       } catch (err) {
         reg.tentativas = (reg.tentativas || 0) + 1;
         await dbSalvar(reg);
-        // se erro de rede, sai do loop e tenta de novo depois
         break;
       }
     }
@@ -396,7 +505,6 @@ $('btn-sync').addEventListener('click', () => {
   tentarSync();
 });
 
-// Sync periódico a cada 30 segundos
 setInterval(() => {
   if (estado.online) tentarSync();
 }, 30000);
@@ -437,8 +545,9 @@ async function renderFila() {
     const ico = r.sincronizado ? '☁️✓' : '☁️↑';
     const classe = r.sincronizado ? 'fila-sync' : 'fila-pendente';
     const coletes = r.coletes.map(c => '#' + c).join(' · ');
+    const marcaAjuste = (r.ajuste_seg && r.ajuste_seg !== 0) ? ' ⏱️' : '';
     return `<div class="fila-item ${classe}">
-      <span class="esq">${ico} <strong>${coletes}</strong> · ${r.posto.replace('PC', 'PC ')}</span>
+      <span class="esq">${ico} <strong>${coletes}</strong> · ${r.posto.replace('PC', 'PC ')}${marcaAjuste}</span>
       <span class="hora">${r.hora}</span>
     </div>`;
   }).join('');
@@ -466,8 +575,6 @@ function toast(msg, erro) {
 async function inicializar() {
   await abrirDB();
   atualizarStatusRede();
-
-  // Restaurar sessão se já tiver logado antes
   const nome = await configLer('nomeFiscal');
   const posto = await configLer('posto');
   if (nome && posto) {
