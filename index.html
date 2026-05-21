@@ -172,19 +172,33 @@
     gap: 8px;
   }
   .btn-primario:active { background: #5C2A1D; transform: scale(0.99); }
+
   .btn-salvar {
     width: 100%;
-    padding: 18px;
+    padding: 22px;
     background: #4A5D3A;
     color: white;
     border: none;
     border-radius: 8px;
-    font-size: 16px;
+    font-size: 18px;
     font-weight: 600;
-    margin-bottom: 24px;
+    margin-bottom: 10px;
   }
   .btn-salvar:disabled { opacity: 0.35; }
   .btn-salvar:active:not(:disabled) { background: #2F4524; transform: scale(0.99); }
+
+  .btn-refazer {
+    width: 100%;
+    padding: 12px;
+    background: #fff;
+    color: #B23A2A;
+    border: 1.5px solid #B23A2A;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    margin-bottom: 24px;
+  }
+  .btn-refazer:active { background: #FBE9E5; }
 
   .fila-box {
     background: #F4F1EA;
@@ -478,10 +492,17 @@
 
   <button id="btn-camera" class="btn-primario">
     <span>📷</span>
-    <span id="btn-camera-label">Tirar foto</span>
+    <span>Tirar foto</span>
+  </button>
+
+  <button id="btn-capturar" class="btn-primario" style="display:none;">
+    <span>📷</span>
+    <span>Capturar</span>
   </button>
 
   <button id="btn-salvar" class="btn-salvar" disabled>💾 Salvar registro</button>
+
+  <button id="btn-refazer" class="btn-refazer" style="display:none;">↻ Refazer foto</button>
 
   <div class="fila-box">
     <div class="fila-header">
