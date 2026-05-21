@@ -1,6 +1,6 @@
 // =============================================================
 // Mangalargada 2026 - App de captura de passagens
-// v2 - com ajuste manual de hora
+// v3 - botões reorganizados (salvar em cima, refazer em vermelho embaixo)
 // =============================================================
 
 const URL_APPS_SCRIPT = 'https://script.google.com/macros/s/AKfycbzUMB3R5-Yx1_WvXV3bV_4_5SDvcjgWxTSkDu4FV6KQ62HOZzmMfV-SH-3a16gPW1R6/exec';
@@ -170,7 +170,7 @@ setInterval(tickRelogio, 250);
 tickRelogio();
 
 // ====================================================================
-// Câmera
+// Câmera (3 botões: tirar, capturar, refazer)
 // ====================================================================
 
 async function abrirCamera() {
@@ -186,10 +186,11 @@ async function abrirCamera() {
     video.style.display = 'block';
     canvas.style.display = 'none';
     estado.cameraAtiva = true;
-    $('btn-camera-label').textContent = 'Capturar';
   } catch (err) {
     alert('Não foi possível acessar a câmera. Verifique as permissões nas configurações do navegador.');
     $('preview-foto').style.display = 'none';
+    $('btn-camera').style.display = 'flex';
+    $('btn-capturar').style.display = 'none';
   }
 }
 
@@ -234,7 +235,10 @@ function capturarFoto() {
   }, 'image/jpeg', 0.82);
 
   estado.cameraAtiva = false;
-  $('btn-camera-label').textContent = 'Refazer foto';
+  // Esconder "Tirar foto" e "Capturar", mostrar "Refazer foto"
+  $('btn-camera').style.display = 'none';
+  $('btn-capturar').style.display = 'none';
+  $('btn-refazer').style.display = 'block';
   $('ts-hora').textContent = estado.horaFoto;
   $('hora-foto-val').textContent = estado.horaFoto;
   $('hora-foto').style.display = 'inline';
@@ -242,19 +246,36 @@ function capturarFoto() {
   atualizarLabelAjuste();
 }
 
-$('btn-camera').addEventListener('click', () => {
-  if (estado.cameraAtiva) {
-    capturarFoto();
-  } else {
-    estado.fotoBlob = null;
-    estado.fotoCanvas = null;
-    estado.horaFoto = null;
-    estado.timestampFoto = null;
-    estado.ajusteSeg = 0;
-    estado.motivoAjuste = '';
-    $('hora-foto').style.display = 'none';
-    $('btn-ajustar-hora').style.display = 'none';
-    abrirCamera();
+function iniciarCaptura() {
+  // Ao clicar em "Tirar foto", abre a câmera e troca pro botão "Capturar"
+  $('btn-camera').style.display = 'none';
+  $('btn-capturar').style.display = 'flex';
+  abrirCamera();
+}
+
+function resetarCaptura() {
+  estado.fotoBlob = null;
+  estado.fotoCanvas = null;
+  estado.horaFoto = null;
+  estado.timestampFoto = null;
+  estado.ajusteSeg = 0;
+  estado.motivoAjuste = '';
+  $('preview-foto').style.display = 'none';
+  $('hora-foto').style.display = 'none';
+  $('btn-ajustar-hora').style.display = 'none';
+  $('btn-camera').style.display = 'flex';
+  $('btn-capturar').style.display = 'none';
+  $('btn-refazer').style.display = 'none';
+  atualizarLabelAjuste();
+  atualizarBotaoSalvar();
+}
+
+$('btn-camera').addEventListener('click', iniciarCaptura);
+$('btn-capturar').addEventListener('click', capturarFoto);
+$('btn-refazer').addEventListener('click', () => {
+  if (confirm('Refazer a foto descarta a atual. Confirmar?')) {
+    resetarCaptura();
+    iniciarCaptura();
   }
 });
 
@@ -418,18 +439,7 @@ function limparFormulario() {
   $('colete1').value = '';
   $('colete2').value = '';
   $('colete3').value = '';
-  estado.fotoBlob = null;
-  estado.fotoCanvas = null;
-  estado.horaFoto = null;
-  estado.timestampFoto = null;
-  estado.ajusteSeg = 0;
-  estado.motivoAjuste = '';
-  $('preview-foto').style.display = 'none';
-  $('hora-foto').style.display = 'none';
-  $('btn-ajustar-hora').style.display = 'none';
-  $('btn-camera-label').textContent = 'Tirar foto';
-  atualizarLabelAjuste();
-  atualizarBotaoSalvar();
+  resetarCaptura();
 }
 
 function blobParaBase64(blob) {
