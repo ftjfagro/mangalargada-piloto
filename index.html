@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#7A3A28">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Mangalargada">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.png">
+<title>Mangalargada · Fiscal</title>
+<style>
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body {
+    margin: 0; padding: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    color: #2C2C2A;
+    background: #fff;
+    min-height: 100vh;
+    overscroll-behavior: none;
+  }
+  body {
+    padding: 16px;
+    padding-top: max(16px, env(safe-area-inset-top));
+    padding-bottom: max(16px, env(safe-area-inset-bottom));
+    max-width: 600px;
+    margin: 0 auto;
+  }
+  input, button { font-family: inherit; }
+  input[type="text"], input[type="tel"] {
+    width: 100%;
+    padding: 14px;
+    font-size: 17px;
+    border: 1px solid #D3D1C7;
+    border-radius: 8px;
+    background: #fff;
+    color: #2C2C2A;
+    -webkit-appearance: none;
+    appearance: none;
+  }
+  input[type="text"]:focus, input[type="tel"]:focus {
+    outline: none;
+    border-color: #7A3A28;
+    box-shadow: 0 0 0 3px rgba(122,58,40,0.15);
+  }
+  button {
+    cursor: pointer;
+    -webkit-appearance: none;
+    appearance: none;
+  }
+  .label {
+    font-size: 12px;
+    color: #6B6B68;
+    margin: 0 0 6px;
+  }
+  .label-dica {
+    font-size: 11px;
+    color: #9A9A95;
+  }
+  .header-card {
+    background: #FAF7F0;
+    border: 1px solid #E5DDC9;
+    border-radius: 12px;
+    padding: 14px 16px;
+    margin-bottom: 16px;
+  }
+  .header-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 6px;
+  }
+  .header-info {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 15px;
+    font-weight: 500;
+  }
+  .header-info .fiscal {
+    font-size: 12px;
+    color: #6B6B68;
+    font-weight: 400;
+  }
+  .pill {
+    font-size: 11px;
+    padding: 4px 10px;
+    border-radius: 999px;
+    font-weight: 500;
+  }
+  .pill-online {
+    background: #E8F5E9;
+    color: #2E5D2F;
+  }
+  .pill-offline {
+    background: #FFF3E0;
+    color: #8B5A00;
+  }
+  .btn-trocar {
+    font-size: 11px;
+    padding: 4px 10px;
+    border: 1px solid #D3D1C7;
+    background: #fff;
+    border-radius: 999px;
+    color: #6B6B68;
+  }
+  .relogio {
+    font-size: 32px;
+    font-weight: 500;
+    font-variant-numeric: tabular-nums;
+    line-height: 1;
+  }
+  .hora-foto {
+    font-size: 12px;
+    color: #9A9A95;
+    margin-left: 8px;
+  }
+  .hora-foto strong {
+    color: #7A3A28;
+    font-family: ui-monospace, "SF Mono", monospace;
+    font-weight: 500;
+  }
+  .bloco { margin-bottom: 16px; }
+  .grid-3 {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+  }
+  .grid-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+  }
+  .inp-colete {
+    font-size: 26px;
+    padding: 16px 4px;
+    text-align: center;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+  }
+  .preview {
+    margin-bottom: 16px;
+    position: relative;
+    background: #2C2C2A;
+    border-radius: 8px;
+    overflow: hidden;
+    aspect-ratio: 4/3;
+  }
+  .preview video, .preview canvas {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+  .overlay {
+    position: absolute;
+    bottom: 8px;
+    left: 8px;
+    right: 8px;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    pointer-events: none;
+    color: white;
+    text-shadow: 0 0 4px rgba(0,0,0,0.95);
+    font-weight: 500;
+  }
+  .overlay .ov-hora {
+    font-family: ui-monospace, "SF Mono", monospace;
+    font-size: 22px;
+  }
+  .overlay .ov-info {
+    font-size: 12px;
+    text-align: right;
+    line-height: 1.3;
+  }
+  .btn-primario {
+    width: 100%;
+    padding: 22px;
+    background: #7A3A28;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 18px;
+    font-weight: 600;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+  }
+  .btn-primario:active {
+    background: #5C2A1D;
+    transform: scale(0.99);
+  }
+  .btn-salvar {
+    width: 100%;
+    padding: 18px;
+    background: #4A5D3A;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 600;
+    margin-bottom: 24px;
+  }
+  .btn-salvar:disabled {
+    opacity: 0.35;
+  }
+  .btn-salvar:active:not(:disabled) {
+    background: #2F4524;
+    transform: scale(0.99);
+  }
+  .fila-box {
+    background: #F4F1EA;
+    border-radius: 12px;
+    padding: 14px;
+  }
+  .fila-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+  }
+  .fila-header-titulo {
+    font-size: 14px;
+    font-weight: 600;
+  }
+  .fila-contador {
+    font-size: 11px;
+    padding: 4px 10px;
+    border-radius: 999px;
+    background: #fff;
+    color: #6B6B68;
+  }
+  .fila-lista { font-size: 13px; }
+  .fila-item {
+    padding: 8px 0;
+    border-bottom: 1px solid #E5DDC9;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+  }
+  .fila-item:last-child { border-bottom: 0; }
+  .fila-item .esq {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    flex: 1;
+    min-width: 0;
+  }
+  .fila-item .hora {
+    font-family: ui-monospace, "SF Mono", monospace;
+    font-weight: 500;
+    flex-shrink: 0;
+  }
+  .fila-pendente { color: #2C2C2A; }
+  .fila-sync { color: #6B6B68; }
+  .icone {
+    display: inline-block;
+    width: 14px; height: 14px;
+    vertical-align: -2px;
+    margin-right: 4px;
+  }
+  .fila-vazia {
+    color: #9A9A95;
+    text-align: center;
+    padding: 16px 0;
+  }
+
+  /* Tela de login */
+  .login-wrap {
+    max-width: 500px;
+    margin: 0 auto;
+    padding: 10px 0;
+  }
+  .login-titulo {
+    text-align: center;
+    margin: 16px 0 24px;
+  }
+  .login-titulo img {
+    width: 80px; height: 80px;
+    object-fit: contain;
+    margin: 0 auto 8px;
+    display: block;
+  }
+  .login-titulo h1 {
+    font-size: 22px;
+    margin: 4px 0 2px;
+    color: #2C2C2A;
+  }
+  .login-titulo p {
+    font-size: 13px;
+    color: #6B6B68;
+    margin: 0;
+  }
+  .btn-posto {
+    padding: 18px 4px;
+    border: 1px solid #D3D1C7;
+    border-radius: 8px;
+    background: #fff;
+    font-size: 15px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    color: #2C2C2A;
+  }
+  .btn-posto.ativo {
+    background: #FAF7F0;
+    border: 2px solid #7A3A28;
+    padding: 17px 3px;
+  }
+  .btn-posto .icone-posto {
+    width: 24px; height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+  }
+  .btn-posto .nome-posto { font-weight: 600; }
+  .btn-entrar {
+    width: 100%;
+    padding: 18px;
+    background: #7A3A28;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 17px;
+    font-weight: 600;
+    margin-top: 16px;
+  }
+  .btn-entrar:disabled {
+    opacity: 0.4;
+  }
+  .grid-postos {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+  .col-span-2 { grid-column: span 2; }
+
+  /* Toast de feedback */
+  .toast {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #4A5D3A;
+    color: white;
+    padding: 12px 24px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    z-index: 1000;
+    opacity: 0;
+    transition: opacity 0.2s;
+    pointer-events: none;
+  }
+  .toast.visivel { opacity: 1; }
+  .toast.erro { background: #7A3A28; }
+</style>
+</head>
+<body>
+
+<div id="tela-login" class="login-wrap">
+  <div class="login-titulo">
+    <img src="icon-192.png" alt="Mangalargada">
+    <h1>Mangalargada 2026</h1>
+    <p>Identifique-se para começar</p>
+  </div>
+
+  <div class="bloco">
+    <p class="label">Nome do fiscal</p>
+    <input id="nome-fiscal" type="text" placeholder="Ex: João Silva" autocomplete="off">
+  </div>
+
+  <div class="bloco">
+    <p class="label">Qual posto você está cobrindo?</p>
+    <div class="grid-postos" id="grid-postos">
+      <button class="btn-posto" data-posto="Largada">
+        <span class="icone-posto" style="color:#7A3A28;">🏁</span>
+        <span class="nome-posto">Largada</span>
+      </button>
+      <button class="btn-posto" data-posto="PC1">
+        <span class="icone-posto" style="color:#8B5A1F;">📍</span>
+        <span class="nome-posto">PC 1</span>
+      </button>
+      <button class="btn-posto" data-posto="PC2">
+        <span class="icone-posto" style="color:#8B5A1F;">📍</span>
+        <span class="nome-posto">PC 2</span>
+      </button>
+      <button class="btn-posto" data-posto="PC3">
+        <span class="icone-posto" style="color:#8B5A1F;">📍</span>
+        <span class="nome-posto">PC 3</span>
+      </button>
+      <button class="btn-posto col-span-2" data-posto="Chegada">
+        <span class="icone-posto" style="color:#4A5D3A;">🏆</span>
+        <span class="nome-posto">Chegada</span>
+      </button>
+    </div>
+  </div>
+
+  <button id="btn-entrar" class="btn-entrar" disabled>Entrar no posto</button>
+</div>
+
+<div id="tela-captura" style="display:none;">
+
+  <div class="header-card">
+    <div class="header-row">
+      <div class="header-info">
+        <span id="ico-posto" style="font-size: 18px;">🏁</span>
+        <span id="lbl-posto">Largada</span>
+        <span class="fiscal" id="lbl-fiscal">· João</span>
+      </div>
+      <div style="display: flex; gap: 6px; align-items: center;">
+        <span id="net-pill" class="pill pill-online">online</span>
+        <button id="btn-trocar" class="btn-trocar">trocar</button>
+      </div>
+    </div>
+    <div style="display: flex; align-items: baseline; gap: 8px;">
+      <span id="relogio" class="relogio">--:--:--</span>
+      <span id="hora-foto" class="hora-foto" style="display:none;">📷 foto: <strong id="hora-foto-val">--:--:--</strong></span>
+    </div>
+  </div>
+
+  <div class="bloco">
+    <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 6px;">
+      <p class="label" style="margin: 0;">Nº dos coletes</p>
+      <p class="label-dica" style="margin: 0;">preencha 1, 2 ou 3</p>
+    </div>
+    <div class="grid-3">
+      <input id="colete1" class="inp-colete" type="tel" inputmode="numeric" pattern="[0-9]*" placeholder="Nº" maxlength="3">
+      <input id="colete2" class="inp-colete" type="tel" inputmode="numeric" pattern="[0-9]*" placeholder="2º" maxlength="3">
+      <input id="colete3" class="inp-colete" type="tel" inputmode="numeric" pattern="[0-9]*" placeholder="3º" maxlength="3">
+    </div>
+  </div>
+
+  <div id="preview-foto" class="preview" style="display:none;">
+    <video id="video-stream" autoplay playsinline muted style="display:none;"></video>
+    <canvas id="canvas-foto" style="display:none;"></canvas>
+    <div class="overlay">
+      <span class="ov-hora" id="ts-hora">--:--:--</span>
+      <div class="ov-info">
+        <div id="ts-posto">—</div>
+      </div>
+    </div>
+  </div>
+
+  <button id="btn-camera" class="btn-primario">
+    <span>📷</span>
+    <span id="btn-camera-label">Tirar foto</span>
+  </button>
+
+  <button id="btn-salvar" class="btn-salvar" disabled>💾 Salvar registro</button>
+
+  <div class="fila-box">
+    <div class="fila-header">
+      <span class="fila-header-titulo">Fila local</span>
+      <span id="fila-contador" class="fila-contador">0 registros</span>
+    </div>
+    <div id="fila-lista" class="fila-lista">
+      <div class="fila-vazia">Nenhum registro ainda.</div>
+    </div>
+    <div style="display: grid; grid-template-columns: 1fr; gap: 8px; margin-top: 12px;">
+      <button id="btn-sync" class="btn-trocar" style="padding: 10px; font-size: 13px;">🔄 Sincronizar agora</button>
+    </div>
+  </div>
+
+</div>
+
+<div id="toast" class="toast">Salvo!</div>
+
+<script src="app.js"></script>
+<script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('sw.js').catch(err => console.log('SW erro:', err));
+    });
+  }
+</script>
+
+</body>
+</html>
